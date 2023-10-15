@@ -20,7 +20,7 @@ class Ship:
 
 
 class Board:
-    def __init__(self, hidden, length):
+    def __init__(self, hidden, length=6):
         self.field = []
         self.ships = []
         self.hidden = hidden
@@ -45,10 +45,10 @@ class Board:
         pass
 
 
-class Player:
-    def __init__(self, own_board, enemy_board):
-        self.own_boars = own_board
-        self.enemy_board = enemy_board
+class Player: # класс игрока
+    def __init__(self):
+        self.own_board = Board(False) # создания собственного поля
+        self.enemy_board = Board(True) # создание вражеского поля
 
     def ask(self):
         pass
@@ -57,28 +57,42 @@ class Player:
         pass
 
 class User(Player):
-    pass
+    def ask(self):
+        pass
 
 class AI(Player):
-    pass
+    def ask(self):
+        pass
 
 
 class Game:
-    def __int__(self, player, player_board, enemy, enemy_board):
-        self.player = player
-        self.player_board = player_board
-        self.enemy = enemy
-        self.enemy_board = enemy_board
+    def __init__(self, first_player, second_player):
+        self.first_player = first_player
+        #self.first_player_board = first_player_board
+        self.second_player = second_player
+        #self.second_player_board = second_player_board
 
     def random_board(self):
         pass
 
     def greet(self):
+        greeting = 'Морской бой'
+        greeting += '\nПравила: ...\n'
+        return greeting # возвращаем строку приветствия
+
+    def loop(self): # игровой цикл
         pass
 
-    def loop(self):
-        pass
+    def start(self): # запуск игры
+        print(self.greet()) # приветствуем игрока
 
-    def start(self):
-        pass
+        self.loop()
+
+
+first_player = User()
+second_player = AI()
+
+game = Game(first_player, second_player)
+
+game.start()
 
