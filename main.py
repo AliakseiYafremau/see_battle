@@ -1,64 +1,67 @@
 class Dot:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
+    def __init__(self, is_missed=False, does_have_ship=False):
+        self.is_missed = is_missed
+        self.does_have_ship = does_have_ship
+
+    def lives_of_ship(self):
+        if self.does_have_ship:
+            return self.does_have_ship.lives
+        return 0
 
 
 class Ship:
-    def __init__(self, length, bow, direction, lives):
-        self.dots = []
+    def __init__(self, length, coordinates):
         self.length = length
-        self.bow = bow
-        self.direction = direction
-        self.lives = lives
-
-    def add_dot(self, dot):
-        self.dots.append(dot)
-
-    def get_dots(self):
-        return self.dots
+        self.coordinates = coordinates
+        self.lives = length
 
 
 class Board:
-    def __init__(self, hidden, length=6):
-        self.field = []
-        self.ships = []
-        self.hidden = hidden
-        self.living_ships = []
+    def __init__(self, length=6):
         self.length = length
+        self.field = []
+        for i in range(length):
+            self.field.append([])
+            for j in range(length):
+                self.field[i].append(Dot())
+        self.living_ships = []
 
-    def add_ship(self, ship):
-        self.ships.append(ship)
+    def can_be_stayed_ship(self, row, column):
+        if not self.does_dot_exist(row, column):
+            return False
+        if self.is_dot_occupied(row, column):
+            return False
+        return True
 
-    def contour(self): # Обводит корабль по контуру. Он будет полезен и в ходе самой игры, и в при расстановке кораблей (помечает соседние точки, где корабля по правилам быть не может).
+    def create_random_board(self):
         pass
 
-    def print_to_consol(self): # выводит доску в консоль в зависимости от параметра hid.
+    def is_all_ships_destroyed(self):
         pass
 
-    def is_dot_out(self, dot):
-        if dot.x >= self.length or dot.y >= self.length or dot.x < 0 or dot.y < 0:
+    def is_dot_occupied(self, row, column):
+        if not self.field[row][column].does_have_ship:
             return True
         return False
 
-    def shoot(self, x, y):
-        pass
+    def does_dot_exist(self, row, column):
+        if row < 0 or row >= self.length or column < 0 or column >= self.length:
+            return False
+        return True
 
 
-class Player: # класс игрока
+class Player:
     def __init__(self):
-        self.own_board = Board(False) # создания собственного поля
-        self.enemy_board = Board(True) # создание вражеского поля
+        self.board = Board()
 
     def ask(self):
         pass
 
-    def move(self):
-        pass
 
 class User(Player):
     def ask(self):
         pass
+
 
 class AI(Player):
     def ask(self):
@@ -68,31 +71,25 @@ class AI(Player):
 class Game:
     def __init__(self, first_player, second_player):
         self.first_player = first_player
-        #self.first_player_board = first_player_board
         self.second_player = second_player
-        #self.second_player_board = second_player_board
 
-    def random_board(self):
+    @staticmethod
+    def greet():
+        greeting = "Морской бой\n"
+        greeting += "Правила игры:\n"
+        greeting += "Игрок должен уничтожить все корабли соперника, раньше его\n"
+
+    def loop(self):
         pass
 
-    def greet(self):
-        greeting = 'Морской бой'
-        greeting += '\nПравила: ...\n'
-        return greeting # возвращаем строку приветствия
-
-    def loop(self): # игровой цикл
-        pass
-
-    def start(self): # запуск игры
-        print(self.greet()) # приветствуем игрока
+    def start(self):
+        self.greet()
 
         self.loop()
 
 
-first_player = User()
-second_player = AI()
-
-game = Game(first_player, second_player)
+f_p = User()
+s_p = AI()
+game = Game(f_p, s_p)
 
 game.start()
-
