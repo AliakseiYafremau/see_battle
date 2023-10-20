@@ -31,6 +31,8 @@ class Board:
             return False
         if self.is_dot_occupied(row, column):
             return False
+        if self.is_something_near(row, column):
+            return False
         return True
 
     def create_random_board(self):
@@ -41,13 +43,31 @@ class Board:
 
     def is_dot_occupied(self, row, column):
         if not self.field[row][column].does_have_ship:
-            return True
-        return False
+            return False
+        return True
 
     def does_dot_exist(self, row, column):
         if row < 0 or row >= self.length or column < 0 or column >= self.length:
             return False
         return True
+
+    def is_something_near(self, row, column):
+
+        #         +---------+-----+---------+
+        #         | col - 1 |  col | col + 1 |
+        # row - 1 |         |      |         |
+        # row     |         | ship |         |
+        # row + 1 |         |      |         |
+        #         +---------+-----+---------+
+
+        for near_row in range(row - 1, row + 2):
+            for near_col in range(column - 1, column + 2):
+                if near_row == row and near_col == column:
+                    continue
+                if self.does_dot_exist(near_row, near_col):
+                    if self.is_dot_occupied(near_row, near_col):
+                        return True
+        return False
 
 
 class Player:
