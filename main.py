@@ -45,6 +45,13 @@ class Board:
             for j in range(length):
                 self.field[i].append(Dot())
         self.living_ships = []
+        self.destroyed_ships = []
+
+    def shoot(self, row, column):
+        if not self.does_dot_exist(row, column):
+            pass
+        if self.field[row][column].is_missed:
+            pass
 
     def clear(self):
         self.field = []
@@ -154,7 +161,9 @@ class Board:
         return False
 
     def is_all_ships_destroyed(self):
-        pass
+        if not self.living_ships:
+            return True
+        return False
 
     def is_dot_occupied(self, row, column):
         if not self.field[row][column].does_have_ship:
@@ -199,7 +208,8 @@ class User(Player):
 
 
 class AI(Player):
-    def ask(self):
+    def ask(self, enemy_board):
+        enemy_board.
 
 
 class Game:
@@ -214,16 +224,25 @@ class Game:
         greeting += "Игрок должен уничтожить все корабли соперника, раньше его\n"
 
     def loop(self):
-        self.first_player.board.create_random_board()
-        self.second_player.board.create_random_board()
-        print(self.first_player.board.output())
-        print(self.second_player.board.output())
+        current_player = self.first_player
+        while not self.does_winner_exist():
+            current_player.ask()
 
     def start(self):
         self.greet()
 
+        self.first_player.board.create_random_board()
+        self.second_player.board.create_random_board()
+
         self.loop()
 
+    def does_winner_exist(self):
+        if self.first_player.board.is_all_ships_destroyed():
+            return self.second_player
+        if self.second_player.board.is_all_ships_destroyed():
+            return self.first_player
+        else:
+            return False
 
 f_p = User()
 s_p = AI()
