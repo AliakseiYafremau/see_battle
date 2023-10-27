@@ -1,4 +1,5 @@
 from random import choice, shuffle
+from time import sleep
 
 # ship - O
 # misflit - x
@@ -21,6 +22,7 @@ from random import choice, shuffle
 class Dot:
     def __init__(self, is_missed=False, does_have_ship=False):
         self.is_missed = is_missed
+        self.is_destroyed_part = False
         self.does_have_ship = does_have_ship
 
     def lives_of_ship(self):
@@ -50,8 +52,12 @@ class Board:
     def shoot(self, row, column):
         if not self.does_dot_exist(row, column):
             pass
-        if self.field[row][column].is_missed:
+        elif self.field[row][column].is_missed:
             pass
+        elif self.field[row][column].does_have_ship and not self.field[row][column].is_destroyed_part:
+            self.field[row][column].does_have_ship.lives -= 1
+            self.field[row][column].is_destroyed_part = True
+
 
     def clear(self):
         self.field = []
@@ -81,6 +87,8 @@ class Board:
     @staticmethod
     def translater(el):
         if el.is_missed:
+            return 'T'
+        if el.is_destroyed_part:
             return 'X'
         if el.does_have_ship:
             return 'O'
@@ -117,6 +125,7 @@ class Board:
                 is_filled = False
                 break
             vacant_dots = self.give_list_of_not_occupied_dot()
+            shuffle(vacant_dots)
             while vacant_dots:
                 dot = choice(vacant_dots)
                 if self.living_ships[i].length == 1:
@@ -147,6 +156,26 @@ class Board:
                 if self.can_be_stayed_ship(row, col):
                     result.append([row, col])
         return result
+
+    def give_list_for_ai(self):
+        result = []
+        for row in range(len(self.field)):
+            for col in range(len(self.field[row])):
+                if self.can_be_shooted_by_ai(row, col):
+                    result.append([row, col])
+        return result
+
+    def can_be_shooted_by_ai(self, row, column):
+        for near_row in range(row - 1, row + 2):
+            for near_col in range(column - 1, column + 2):
+                if near_row == row and near_col == column:
+                    if self.field[near_row][near_col].is_missed or self.field[near_row][near_col].is_destroyed_part:
+                        return False
+                elif self.does_dot_exist(near_row, near_col):
+                    if self.field[near_row][near_col].does_have_ship:
+                        if not self.field[near_row][near_col].lives_of_ship():
+                            return False
+        return True
 
     @staticmethod
     def create_ships(count, length):
@@ -197,42 +226,62 @@ class Board:
 class Player:
     def __init__(self):
         self.board = Board()
-
-    def ask(self):
-        pass
+        self.enemy = False
 
 
 class User(Player):
     def ask(self):
-        pass
+        print('Ваш ход.')
+        print('Ваша доска: ')
+        print(self.board.output())
+        move = input('Введите два числа через пробел: ').split(' ')
+
+        while not self.is_form_of_move_correct(move, self.enemy.board.length):
+            move = input('Ошибка ввода. Повторите ввод: ').split(' ')
+
+    @staticmethod
+    def is_form_of_move_correct(move, length_of_table):
+        if len(move) == 2 and move[0].isnumeric and move[1].isnumeric:
+            if 0 < int(move[0]) <= length_of_table and 0 < int(move[1]) <= length_of_table:
+                return True
+        return False
 
 
 class AI(Player):
-    def ask(self, enemy_board):
-        enemy_board.
+    def ask(self):
+        print('Ход AI')
+        print(self.board.output())
+        print(self.enemy.board.give_list_for_ai())
+        print(*choice(self.enemy.board.give_list_for_ai()))
+        self.enemy.board.shoot(*choice(self.enemy.board.give_list_for_ai()))
 
 
 class Game:
     def __init__(self, first_player, second_player):
         self.first_player = first_player
         self.second_player = second_player
+        self.current_player = self.first_player
 
     @staticmethod
     def greet():
         greeting = "Морской бой\n"
         greeting += "Правила игры:\n"
         greeting += "Игрок должен уничтожить все корабли соперника, раньше его\n"
+        greeting += "Ход пишется двумя цифрами через пробел. Цифры могут быть от 1 до размера доски, концы включая.\n"
 
     def loop(self):
-        current_player = self.first_player
         while not self.does_winner_exist():
-            current_player.ask()
+            self.current_player.ask()
+            self.change_current_player()
 
     def start(self):
         self.greet()
 
         self.first_player.board.create_random_board()
         self.second_player.board.create_random_board()
+
+        self.first_player.enemy = self.second_player
+        self.second_player.enemy = self.first_player
 
         self.loop()
 
@@ -243,6 +292,14 @@ class Game:
             return self.first_player
         else:
             return False
+
+    def change_current_player(self):
+        if self.current_player == self.first_player:
+            self.current_player = self.second_player
+            self.enemy_of_current_player = self.first_player
+        else:
+            self.current_player = self.first_player
+            self.enemy_of_current_player = self.second_player
 
 f_p = User()
 s_p = AI()
