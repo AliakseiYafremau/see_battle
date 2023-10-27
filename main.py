@@ -2,8 +2,8 @@ from random import choice, shuffle
 from time import sleep
 
 # ship - O
-# misflit - x
-#
+# misflit - T
+# destroyed part of ship - X
 # 1 - OOO
 # 2 - OO
 # 4 - O
@@ -57,6 +57,10 @@ class Board:
         elif self.field[row][column].does_have_ship and not self.field[row][column].is_destroyed_part:
             self.field[row][column].does_have_ship.lives -= 1
             self.field[row][column].is_destroyed_part = True
+        elif self.field[row][column].is_destroyed_part:
+            pass
+        else:
+            self.field[row][column].is_missed = True
 
 
     def clear(self):
@@ -157,15 +161,15 @@ class Board:
                     result.append([row, col])
         return result
 
-    def give_list_for_ai(self):
+    def give_list_of_dot_for_player(self):
         result = []
         for row in range(len(self.field)):
             for col in range(len(self.field[row])):
-                if self.can_be_shooted_by_ai(row, col):
+                if self.can_be_shooted_by_player(row, col):
                     result.append([row, col])
         return result
 
-    def can_be_shooted_by_ai(self, row, column):
+    def can_be_shooted_by_player(self, row, column):
         for near_row in range(row - 1, row + 2):
             for near_col in range(column - 1, column + 2):
                 if near_row == row and near_col == column:
@@ -234,15 +238,25 @@ class User(Player):
         print('Ваш ход.')
         print('Ваша доска: ')
         print(self.board.output())
-        move = input('Введите два числа через пробел: ').split(' ')
+        print('Доска врага: ')
+        print(self.enemy.board.output())
+        move = input('Введите два числа через пробел: ').strip().split(' ')
 
-        while not self.is_form_of_move_correct(move, self.enemy.board.length):
-            move = input('Ошибка ввода. Повторите ввод: ').split(' ')
+        while True:
+            if len(move) == 2 and move[0].isnumeric() and move[1].isnumeric():
+                move = [int(move[0]), int(move[1])]
+                if self.board.does_dot_exist(move[0], move[1]) \
+                        and move in self.board.give_list_of_dot_for_player():
+                    break
+            move = input('Ошибка. Повторите ввод: ').strip().split(' ')
 
-    @staticmethod
-    def is_form_of_move_correct(move, length_of_table):
+
+        self.enemy.board.shoot(*move)
+
+    def is_form_of_move_correct(self, move):
         if len(move) == 2 and move[0].isnumeric and move[1].isnumeric:
-            if 0 < int(move[0]) <= length_of_table and 0 < int(move[1]) <= length_of_table:
+            if self.board.does_dot_exist(move[0], move[1]) \
+                    and self.board.field[move[0]][move[1]] in self.board.give_list_of_for_player():
                 return True
         return False
 
@@ -251,9 +265,10 @@ class AI(Player):
     def ask(self):
         print('Ход AI')
         print(self.board.output())
-        print(self.enemy.board.give_list_for_ai())
-        print(*choice(self.enemy.board.give_list_for_ai()))
-        self.enemy.board.shoot(*choice(self.enemy.board.give_list_for_ai()))
+        print(self.enemy.board.give_list_of_dot_for_player())
+        ch = choice(self.enemy.board.give_list_of_dot_for_player())
+        print(ch)
+        self.enemy.board.shoot(ch[0], ch[1])
 
 
 class Game:
