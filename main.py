@@ -2,7 +2,7 @@ from random import choice, shuffle
 from time import sleep
 
 # ship - O
-# misflit - T
+# misfit - T
 # destroyed part of ship - X
 # 1 - OOO
 # 2 - OO
@@ -50,15 +50,9 @@ class Board:
         self.destroyed_ships = []
 
     def shoot(self, row, column):
-        if not self.does_dot_exist(row, column):
-            pass
-        elif self.field[row][column].is_missed:
-            pass
-        elif self.field[row][column].does_have_ship and not self.field[row][column].is_destroyed_part:
+        if self.field[row][column].does_have_ship and not self.field[row][column].is_destroyed_part:
             self.field[row][column].does_have_ship.lives -= 1
             self.field[row][column].is_destroyed_part = True
-        elif self.field[row][column].is_destroyed_part:
-            pass
         else:
             self.field[row][column].is_missed = True
 
@@ -70,31 +64,31 @@ class Board:
             for j in range(self.length):
                 self.field[i].append(Dot())
 
-    def output(self):
+    def output(self, hide=False):
         row = 0
         res =  '     0 1 2 3 4 5   \n'
         res += '   + - - - - - - + \n'
-        res += ' 0 | {} {} {} {} {} {} | \n'.format(*map(self.translater, self.field[row]))
+        res += ' 0 | {} {} {} {} {} {} | \n'.format(*map(self.translater, self.field[row], [hide for i in range(6)]))
         row += 1
-        res += ' 1 | {} {} {} {} {} {} | \n'.format(*map(self.translater, self.field[row]))
+        res += ' 1 | {} {} {} {} {} {} | \n'.format(*map(self.translater, self.field[row], [hide for i in range(6)]))
         row += 1
-        res += ' 2 | {} {} {} {} {} {} | \n'.format(*map(self.translater, self.field[row]))
+        res += ' 2 | {} {} {} {} {} {} | \n'.format(*map(self.translater, self.field[row], [hide for i in range(6)]))
         row += 1
-        res += ' 3 | {} {} {} {} {} {} | \n'.format(*map(self.translater, self.field[row]))
+        res += ' 3 | {} {} {} {} {} {} | \n'.format(*map(self.translater, self.field[row], [hide for i in range(6)]))
         row += 1
-        res += ' 4 | {} {} {} {} {} {} | \n'.format(*map(self.translater, self.field[row]))
+        res += ' 4 | {} {} {} {} {} {} | \n'.format(*map(self.translater, self.field[row], [hide for i in range(6)]))
         row += 1
-        res += ' 5 | {} {} {} {} {} {} | \n'.format(*map(self.translater, self.field[row]))
-        res += '   + - - - - - - + \n'
+        res += ' 5 | {} {} {} {} {} {} | \n'.format(*map(self.translater, self.field[row], [hide for i in range(6)]))
+        res += '   + - - - - - - + '
         return res
 
     @staticmethod
-    def translater(el):
+    def translater(el, hidden=False):
         if el.is_missed:
             return 'T'
         if el.is_destroyed_part:
             return 'X'
-        if el.does_have_ship:
+        if el.does_have_ship and not hidden:
             return 'O'
         else:
             return ' '
@@ -239,7 +233,7 @@ class User(Player):
         print('Ваша доска: ')
         print(self.board.output())
         print('Доска врага: ')
-        print(self.enemy.board.output())
+        print(self.enemy.board.output(True))
         move = input('Введите два числа через пробел: ').strip().split(' ')
 
         while True:
@@ -249,7 +243,6 @@ class User(Player):
                         and move in self.board.give_list_of_dot_for_player():
                     break
             move = input('Ошибка. Повторите ввод: ').strip().split(' ')
-
 
         self.enemy.board.shoot(*move)
 
@@ -263,12 +256,11 @@ class User(Player):
 
 class AI(Player):
     def ask(self):
-        print('Ход AI')
-        print(self.board.output())
-        print(self.enemy.board.give_list_of_dot_for_player())
+        print('ХОД AI: ')
         ch = choice(self.enemy.board.give_list_of_dot_for_player())
-        print(ch)
+        print(f'Ход на поле: {ch[0], ch[1]}')
         self.enemy.board.shoot(ch[0], ch[1])
+        print()
 
 
 class Game:
