@@ -59,6 +59,8 @@ class Board:
         elif not self.field[row][column].is_missed and not self.field[row][column].is_destroyed_part:
             self.field[row][column].is_missed = True
             return 'Вы промахнулись'
+        elif self.field[row][column].is_missed:
+            return 'На этом поле нет кораблей'
         else:
             return 'Вы уже ходили на это поле'
 
@@ -66,7 +68,7 @@ class Board:
         for el in ship.coordinates:
             for near_row in range(el[0] - 1, el[0] + 2):
                 for near_col in range(el[1] - 1, el[1] + 2):
-                    if near_row == el[0] and near_col == el[1]:
+                    if [near_row, near_col] in ship.coordinates:
                         continue
                     elif self.does_dot_exist(near_row, near_col):
                         self.field[near_row][near_col].is_missed = True
@@ -152,7 +154,7 @@ class Board:
                     direction = possible_directions.pop() # [-1, 0]
                     coordinates = [[dot[0] + direction[0]*l, dot[1] + direction[1]*l] for l in range(1, interval+1)]
                     coordinates.append([dot[0], dot[1]])
-                    self.living_ships[i].coordinates.append(coordinates)
+                    self.living_ships[i].coordinates = coordinates
                     if all([self.can_be_stayed_ship(dot[0] + direction[0]*l, dot[1] + direction[1]*l) for l in range(1, interval+1)]):
                         self.put_ship(coordinates, self.living_ships[i])
                         break
@@ -249,14 +251,13 @@ class User(Player):
         print('Ваша доска: ')
         print(self.board.output())
         print('Доска врага: ')
-        print(self.enemy.board.output(True))
+        print(self.enemy.board.output())
         move = input('Введите два числа через пробел: ').strip().split(' ')
 
         while True:
             if len(move) == 2 and move[0].isnumeric() and move[1].isnumeric():
                 move = [int(move[0]), int(move[1])]
-                if self.board.does_dot_exist(move[0], move[1]) \
-                        and move in self.enemy.board.give_list_of_dot_for_player():
+                if self.board.does_dot_exist(move[0], move[1]):
                     break
             move = input('Ошибка. Повторите ввод: ').strip().split(' ')
 
@@ -269,12 +270,20 @@ class User(Player):
             sleep(delay)
             self.ask(delay)
         if status == 'Вы уничтожили корабль':
-            if not self.board.are_all_ships_destroyed():
-                print(status)
+            print(status)
+            if not self.enemy.board.are_all_ships_destroyed():
                 print('Повторите ход')
                 print('...')
                 sleep(delay)
                 self.ask(delay)
+            else:
+                return
+        if status == 'На этом поле нет кораблей':
+            print(status)
+            print('Повторите ход')
+            print('...')
+            sleep(delay)
+            self.ask(delay)
         if status == 'Вы уже ходили на это поле':
             print(status)
             print('Повторите ввод')
@@ -292,17 +301,22 @@ class AI(Player):
         ch = choice(self.enemy.board.give_list_of_dot_for_player())
         print(f'Ход на поле: {ch[0], ch[1]}')
         status = self.enemy.board.shoot(ch[0], ch[1])
+
+
         if status == 'Вы задели корабль':
             print('AI задел корабль')
             print('...')
             sleep(delay)
+            if self.enemy.board.are_all_ships_destroyed():
+                return
             self.ask(delay)
         elif status == 'Вы уничтожили корабль':
             if not self.board.are_all_ships_destroyed():
                 print('AI уничтожил корабль')
-                print('Повторите ход')
                 print('...')
                 sleep(delay)
+                if self.enemy.board.are_all_ships_destroyed():
+                    return
                 self.ask(delay)
         else:
             print('AI промахнулся')
