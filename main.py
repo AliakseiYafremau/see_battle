@@ -47,14 +47,29 @@ class Board:
             for j in range(length):
                 self.field[i].append(Dot())
         self.living_ships = []
-        self.destroyed_ships = []
 
     def shoot(self, row, column):
         if self.field[row][column].does_have_ship and not self.field[row][column].is_destroyed_part:
             self.field[row][column].does_have_ship.lives -= 1
             self.field[row][column].is_destroyed_part = True
-        else:
+            if self.field[row][column].does_have_ship.lives:
+                return 'Вы задели корабль'
+            self.contour(self.field[row][column].does_have_ship)
+            return 'Вы уничтожили корабль'
+        elif not self.field[row][column].is_missed and not self.field[row][column].is_destroyed_part:
             self.field[row][column].is_missed = True
+            return 'Вы промахнулись'
+        else:
+            return 'Вы уже ходили на это поле'
+
+    def contour(self, ship):
+        for el in ship.coordinates:
+            for near_row in range(el[0] - 1, el[0] + 2):
+                for near_col in range(el[1] - 1, el[1] + 2):
+                    if near_row == el[0] and near_col == el[1]:
+                        continue
+                    elif self.does_dot_exist(near_row, near_col):
+                        self.field[near_row][near_col].is_missed = True
 
 
     def clear(self):
@@ -187,10 +202,11 @@ class Board:
                     return True
         return False
 
-    def is_all_ships_destroyed(self):
-        if not self.living_ships:
-            return True
-        return False
+    def are_all_ships_destroyed(self):
+        for el in self.living_ships:
+            if el.lives:
+                return False
+        return True
 
     def is_dot_occupied(self, row, column):
         if not self.field[row][column].does_have_ship:
@@ -228,8 +244,8 @@ class Player:
 
 
 class User(Player):
-    def ask(self):
-        print('Ваш ход.')
+    def ask(self, delay):
+        print('Ваш ход')
         print('Ваша доска: ')
         print(self.board.output())
         print('Доска врага: ')
@@ -240,34 +256,66 @@ class User(Player):
             if len(move) == 2 and move[0].isnumeric() and move[1].isnumeric():
                 move = [int(move[0]), int(move[1])]
                 if self.board.does_dot_exist(move[0], move[1]) \
-                        and move in self.board.give_list_of_dot_for_player():
+                        and move in self.enemy.board.give_list_of_dot_for_player():
                     break
             move = input('Ошибка. Повторите ввод: ').strip().split(' ')
 
-        self.enemy.board.shoot(*move)
+        status = self.enemy.board.shoot(*move)
 
-    def is_form_of_move_correct(self, move):
-        if len(move) == 2 and move[0].isnumeric and move[1].isnumeric:
-            if self.board.does_dot_exist(move[0], move[1]) \
-                    and self.board.field[move[0]][move[1]] in self.board.give_list_of_for_player():
-                return True
-        return False
-
+        if status == 'Вы задели корабль':
+            print(status)
+            print('Повторите ход')
+            print('...')
+            sleep(delay)
+            self.ask(delay)
+        if status == 'Вы уничтожили корабль':
+            if not self.board.are_all_ships_destroyed():
+                print(status)
+                print('Повторите ход')
+                print('...')
+                sleep(delay)
+                self.ask(delay)
+        if status == 'Вы уже ходили на это поле':
+            print(status)
+            print('Повторите ввод')
+            print('...')
+            sleep(delay)
+            self.ask(delay)
+        if status == 'Вы промахнулись':
+            print(status)
+            print('...')
+            sleep(delay)
 
 class AI(Player):
-    def ask(self):
+    def ask(self, delay):
         print('ХОД AI: ')
         ch = choice(self.enemy.board.give_list_of_dot_for_player())
         print(f'Ход на поле: {ch[0], ch[1]}')
-        self.enemy.board.shoot(ch[0], ch[1])
-        print()
+        status = self.enemy.board.shoot(ch[0], ch[1])
+        if status == 'Вы задели корабль':
+            print('AI задел корабль')
+            print('...')
+            sleep(delay)
+            self.ask(delay)
+        elif status == 'Вы уничтожили корабль':
+            if not self.board.are_all_ships_destroyed():
+                print('AI уничтожил корабль')
+                print('Повторите ход')
+                print('...')
+                sleep(delay)
+                self.ask(delay)
+        else:
+            print('AI промахнулся')
+            print('...')
+            sleep(delay)
 
 
 class Game:
-    def __init__(self, first_player, second_player):
+    def __init__(self, first_player, second_player, delay):
         self.first_player = first_player
         self.second_player = second_player
         self.current_player = self.first_player
+        self.delay = delay
 
     @staticmethod
     def greet():
@@ -278,8 +326,10 @@ class Game:
 
     def loop(self):
         while not self.does_winner_exist():
-            self.current_player.ask()
+            self.current_player.ask(self.delay)
             self.change_current_player()
+
+        self.finish()
 
     def start(self):
         self.greet()
@@ -292,10 +342,16 @@ class Game:
 
         self.loop()
 
+    def finish(self):
+        if isinstance(self.does_winner_exist(), User):
+            print('ВЫ ПОБЕДИЛИ')
+        else:
+            print('Увы, но вы проиграли(((')
+
     def does_winner_exist(self):
-        if self.first_player.board.is_all_ships_destroyed():
+        if self.first_player.board.are_all_ships_destroyed():
             return self.second_player
-        if self.second_player.board.is_all_ships_destroyed():
+        if self.second_player.board.are_all_ships_destroyed():
             return self.first_player
         else:
             return False
@@ -310,6 +366,6 @@ class Game:
 
 f_p = User()
 s_p = AI()
-game = Game(f_p, s_p)
+game = Game(f_p, s_p, 1.5)
 
 game.start()
