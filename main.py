@@ -251,7 +251,7 @@ class User(Player):
         print('Ваша доска: ')
         print(self.board.output())
         print('Доска врага: ')
-        print(self.enemy.board.output())
+        print(self.enemy.board.output(True))
         move = input('Введите два числа через пробел: ').strip().split(' ')
 
         while True:
